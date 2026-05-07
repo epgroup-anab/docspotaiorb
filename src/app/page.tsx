@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { BarVisualizer } from "@/components/ui/bar-visualizer";
-import { Orb } from "@/components/ui/orb";
+import { ParticleOrb } from "@/components/ui/particle-orb";
 import { X } from "lucide-react";
 import { DOCSPOT_AGENT_ID } from "@/config/agent";
 
@@ -67,12 +67,12 @@ export default function Home() {
                     className="group relative w-32 h-32 md:w-40 md:h-40 rounded-full focus:outline-none transition-transform duration-500 hover:scale-105"
                     aria-label="Talk to Docspot AI"
                   >
-                    <div className="absolute inset-0 rounded-full bg-red-500 blur-2xl opacity-30 animate-pulse group-hover:opacity-50 transition-opacity duration-500"></div>
-                    <div className="relative w-full h-full rounded-full overflow-hidden border-[6px] border-white shadow-xl ring-2 ring-red-200">
-                      <Orb colors={["#dc2626", "#ffffff"]} agentState={null} />
+                    <div className="absolute inset-0 rounded-full bg-violet-500 blur-2xl opacity-30 animate-pulse group-hover:opacity-50 transition-opacity duration-500"></div>
+                    <div className="relative w-full h-full rounded-full overflow-hidden border-[6px] border-white shadow-xl ring-2 ring-violet-200 bg-slate-950">
+                      <ParticleOrb />
                     </div>
                   </button>
-                  <span className="text-lg font-medium text-red-600">Talk to Docspot AI</span>
+                  <span className="text-lg font-medium text-violet-700">Talk to Docspot AI</span>
                 </div>
               </div>
             ) : (
