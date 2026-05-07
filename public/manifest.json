@@ -1,0 +1,17 @@
+{
+  "name": "SolarStyle UK - Intelligent Solar Solutions",
+  "short_name": "SolarStyle UK",
+  "description": "Powering your future with intelligent solar solutions",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#fbbf24",
+  "background_color": "#f9fafb",
+  "display": "standalone",
+  "start_url": "/"
+}
+
