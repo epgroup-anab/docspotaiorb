@@ -153,19 +153,19 @@ function OrbScene({
     if (agentState === "idle") {
       target = 0;
     } else if (agentState === "connecting") {
-      target = 0.25 + 0.15 * Math.sin(t * 1.2);
+      target = 0.3 + 0.2 * Math.sin(t * 1.4);
     } else if (agentState === "listening") {
       const audio = audioLevelRef.current ?? 0;
-      target = 0.1 + audio * 0.5;
+      target = 0.2 + audio * 1.2;
     } else if (agentState === "speaking") {
-      speakingPhase.current.slow += delta * 2.2;
+      speakingPhase.current.slow += delta * 3.0;
       const slow = 0.5 + 0.5 * Math.sin(speakingPhase.current.slow);
-      const wobble = 0.5 + 0.5 * Math.sin(t * 4.5);
-      target = 0.3 + 0.25 * (slow * 0.7 + wobble * 0.3);
+      const wobble = 0.5 + 0.5 * Math.sin(t * 5.5 + Math.sin(t * 1.7));
+      target = 0.45 + 0.4 * (slow * 0.65 + wobble * 0.35);
     }
 
     target = Math.min(1, Math.max(0, target));
-    intensityRef.current += (target - intensityRef.current) * 0.1;
+    intensityRef.current += (target - intensityRef.current) * 0.15;
 
     targetRotation.current.y = pointer.x * 0.4 + t * 0.18;
     targetRotation.current.x =
@@ -177,7 +177,7 @@ function OrbScene({
       (targetRotation.current.x - groupRef.current.rotation.x) * 0.05;
 
     const breatheBase = 1 + Math.sin(t * 1.4) * 0.025;
-    const reactScale = 1 + intensityRef.current * 0.08;
+    const reactScale = 1 + intensityRef.current * 0.18;
     groupRef.current.scale.setScalar(breatheBase * reactScale);
   });
 
@@ -398,7 +398,7 @@ const vertexShader = /* glsl */ `
 
     float twinkle = 0.75 + 0.25 * sin(uTime * 2.0 + aRandom.x * 8.0);
     float depthSize = mix(0.55, 1.3, vDepth);
-    float intensityBoost = 1.0 + uIntensity * 0.18;
+    float intensityBoost = 1.0 + uIntensity * 0.35;
     gl_PointSize = uSize * uPixelRatio * twinkle * depthSize * intensityBoost * (1.0 / dist);
   }
 `;
@@ -422,10 +422,10 @@ const fragmentShader = /* glsl */ `
 
     vec3 color = mix(uColorB, uColorA, vDepth);
     color = mix(color, color * 0.7, coreHot * vDepth * 0.4);
-    color = mix(color, color * 1.08, vIntensity * 0.3);
+    color = mix(color, color * 1.12, vIntensity * 0.5);
 
     float alpha = disc * uOpacity * mix(0.25, 1.1, vDepth);
-    alpha *= 1.0 + vIntensity * 0.08;
+    alpha *= 1.0 + vIntensity * 0.18;
     alpha = clamp(alpha, 0.0, 1.0);
 
     gl_FragColor = vec4(color, alpha);
