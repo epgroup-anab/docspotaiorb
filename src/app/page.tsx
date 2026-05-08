@@ -77,7 +77,10 @@ export default function Home() {
                   className="group relative w-[420px] h-[420px] md:w-[520px] md:h-[520px] focus:outline-none transition-transform duration-500 hover:scale-[1.04] cursor-pointer"
                   aria-label="Talk to DocSpot AI"
                 >
-                  <div className="absolute inset-[28%] rounded-full bg-violet-500 blur-3xl opacity-15 animate-pulse group-hover:opacity-25 transition-opacity duration-500 pointer-events-none"></div>
+                  <div
+                    className="absolute inset-[28%] rounded-full blur-3xl opacity-15 animate-pulse group-hover:opacity-25 transition-opacity duration-500 pointer-events-none"
+                    style={{ backgroundColor: "#007fff" }}
+                  ></div>
                   <div className="relative w-full h-full">
                     <ParticleOrb agentState="idle" />
                   </div>
@@ -87,13 +90,14 @@ export default function Home() {
               <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
                 <div className="relative w-[420px] h-[420px] md:w-[520px] md:h-[520px]">
                   <div
-                    className={`absolute inset-[28%] rounded-full bg-violet-500 blur-3xl pointer-events-none transition-opacity duration-700 ${
+                    className={`absolute inset-[28%] rounded-full blur-3xl pointer-events-none transition-opacity duration-700 ${
                       agentState === "speaking"
                         ? "opacity-40"
                         : agentState === "listening"
                         ? "opacity-25"
                         : "opacity-15"
                     }`}
+                    style={{ backgroundColor: "#007fff" }}
                   ></div>
                   <div className="relative w-full h-full">
                     <ParticleOrb
@@ -103,7 +107,10 @@ export default function Home() {
                   </div>
                 </div>
 
-                <p className="text-xs font-medium uppercase tracking-[0.2em] text-violet-700/80">
+                <p
+                  className="text-xs font-medium uppercase tracking-[0.2em]"
+                  style={{ color: "rgba(0, 80, 204, 0.8)" }}
+                >
                   {agentState === "connecting"
                     ? "Connecting..."
                     : agentState === "speaking"

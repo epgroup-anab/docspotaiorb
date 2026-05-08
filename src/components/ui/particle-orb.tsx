@@ -135,12 +135,12 @@ function OrbScene({
 
   const colors = useMemo(
     () => ({
-      coreFront: new THREE.Color("#4c1d95"),
-      coreBack: new THREE.Color("#a78bfa"),
-      haloFront: new THREE.Color("#5b21b6"),
-      haloBack: new THREE.Color("#c4b5fd"),
-      mistFront: new THREE.Color("#7c3aed"),
-      mistBack: new THREE.Color("#ddd6fe"),
+      coreFront: new THREE.Color("#001f5c"),
+      coreBack: new THREE.Color("#5cadff"),
+      haloFront: new THREE.Color("#0050cc"),
+      haloBack: new THREE.Color("#85c2ff"),
+      mistFront: new THREE.Color("#007fff"),
+      mistBack: new THREE.Color("#d6ecff"),
     }),
     []
   );
