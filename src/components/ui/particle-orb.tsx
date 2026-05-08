@@ -97,15 +97,11 @@ function ParticleShell({
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          array={positions}
-          count={positions.length / 3}
-          itemSize={3}
+          args={[positions, 3]}
         />
         <bufferAttribute
           attach="attributes-aRandom"
-          array={randoms}
-          count={randoms.length / 3}
-          itemSize={3}
+          args={[randoms, 3]}
         />
       </bufferGeometry>
       <shaderMaterial
