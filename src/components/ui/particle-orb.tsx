@@ -187,7 +187,7 @@ function OrbScene({
         count={1800}
         innerRadius={1.3}
         outerRadius={1.65}
-        size={9}
+        size={12}
         colorA={colors.mistFront}
         colorB={colors.mistBack}
         swirl={0.8}
@@ -200,7 +200,7 @@ function OrbScene({
         count={3000}
         innerRadius={0.95}
         outerRadius={1.3}
-        size={13}
+        size={17}
         colorA={colors.haloFront}
         colorB={colors.haloBack}
         swirl={0.55}
@@ -213,7 +213,7 @@ function OrbScene({
         count={3500}
         innerRadius={0.0}
         outerRadius={0.95}
-        size={16}
+        size={21}
         colorA={colors.coreFront}
         colorB={colors.coreBack}
         swirl={0.35}
@@ -301,7 +301,7 @@ export function ParticleOrb({
   return (
     <div className={className ?? "relative h-full w-full"}>
       <Canvas
-        camera={{ position: [0, 0, 3.4], fov: 55 }}
+        camera={{ position: [0, 0, 4.4], fov: 55 }}
         gl={{
           alpha: true,
           antialias: true,
@@ -390,7 +390,7 @@ const vertexShader = /* glsl */ `
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
 
     float dist = -mvPosition.z;
-    vDepth = 1.0 - clamp((dist - 1.7) / 3.5, 0.0, 1.0);
+    vDepth = 1.0 - clamp((dist - 2.75) / 3.3, 0.0, 1.0);
     vRandom = aRandom.z;
     vIntensity = uIntensity;
 

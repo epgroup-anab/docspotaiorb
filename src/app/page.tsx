@@ -62,7 +62,8 @@ export default function Home() {
         <div className="max-w-3xl w-full flex flex-col items-center gap-8 z-10">
           <div className="text-center px-4">
             <h1
-              className={`${outfit.className} text-5xl md:text-6xl font-semibold tracking-tight text-gray-900`}
+              className={`${outfit.className} text-5xl md:text-6xl font-semibold tracking-tight`}
+              style={{ color: "#007fff" }}
             >
               DocSpot AI
             </h1>
