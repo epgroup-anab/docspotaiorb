@@ -1,10 +1,9 @@
 "use client";
 
 import { Outfit } from "next/font/google";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useConversation } from "@elevenlabs/react";
-import { BarVisualizer } from "@/components/ui/bar-visualizer";
-import { ParticleOrb } from "@/components/ui/particle-orb";
+import { ParticleOrb, type OrbAgentState } from "@/components/ui/particle-orb";
 import { X } from "lucide-react";
 import { DOCSPOT_AGENT_ID } from "@/config/agent";
 
@@ -51,6 +50,12 @@ export default function Home() {
     await conversation.endSession();
   }, [conversation]);
 
+  const agentState: OrbAgentState = useMemo(() => {
+    if (!showVisualizer) return "idle";
+    if (conversation.status !== "connected") return "connecting";
+    return conversation.isSpeaking ? "speaking" : "listening";
+  }, [showVisualizer, conversation.status, conversation.isSpeaking]);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f9fafb] text-[#1f2937] font-sans overflow-hidden">
       <main className="flex-1 flex flex-col items-center justify-center relative p-4">
@@ -63,56 +68,55 @@ export default function Home() {
             </h1>
           </div>
 
-          <div className="relative w-full min-h-[520px] flex items-center justify-center">
+          <div className="relative w-full min-h-[560px] flex items-center justify-center">
             {!showVisualizer ? (
               <div className="flex flex-col items-center gap-8 py-8">
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={startConversation}
-                    className="group relative w-[420px] h-[420px] md:w-[520px] md:h-[520px] focus:outline-none transition-transform duration-500 hover:scale-[1.04] cursor-pointer"
-                    aria-label="Talk to DocSpot AI"
-                  >
-                    <div className="absolute inset-[28%] rounded-full bg-violet-500 blur-3xl opacity-15 animate-pulse group-hover:opacity-25 transition-opacity duration-500 pointer-events-none"></div>
-                    <div className="relative w-full h-full">
-                      <ParticleOrb />
-                    </div>
-                  </button>
-                </div>
+                <button
+                  onClick={startConversation}
+                  className="group relative w-[420px] h-[420px] md:w-[520px] md:h-[520px] focus:outline-none transition-transform duration-500 hover:scale-[1.04] cursor-pointer"
+                  aria-label="Talk to DocSpot AI"
+                >
+                  <div className="absolute inset-[28%] rounded-full bg-violet-500 blur-3xl opacity-15 animate-pulse group-hover:opacity-25 transition-opacity duration-500 pointer-events-none"></div>
+                  <div className="relative w-full h-full">
+                    <ParticleOrb agentState="idle" />
+                  </div>
+                </button>
               </div>
             ) : (
-              <div className="w-full max-w-md flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-500 slide-in-from-bottom-4">
-                <div className="w-full bg-white/80 backdrop-blur-md rounded-2xl p-8 shadow-xl border border-red-100">
-                  <BarVisualizer
-                    state={
-                      conversation.status === "connected"
-                        ? conversation.isSpeaking
-                          ? "speaking"
-                          : "listening"
-                        : "connecting"
-                    }
-                    barCount={20}
-                    mediaStream={mediaStream}
-                    className="h-32"
-                  />
+              <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
+                <div className="relative w-[420px] h-[420px] md:w-[520px] md:h-[520px]">
+                  <div
+                    className={`absolute inset-[28%] rounded-full bg-violet-500 blur-3xl pointer-events-none transition-opacity duration-700 ${
+                      agentState === "speaking"
+                        ? "opacity-40"
+                        : agentState === "listening"
+                        ? "opacity-25"
+                        : "opacity-15"
+                    }`}
+                  ></div>
+                  <div className="relative w-full h-full">
+                    <ParticleOrb
+                      agentState={agentState}
+                      mediaStream={mediaStream}
+                    />
+                  </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <button
-                    onClick={endConversation}
-                    className="px-8 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm text-sm font-medium flex items-center gap-2"
-                  >
-                    <X size={16} />
-                    End Call with DocSpot AI
-                  </button>
-                </div>
-
-                <p className="text-xs font-medium animate-pulse uppercase tracking-wider text-red-600/80">
-                  {conversation.status === "connected"
-                    ? conversation.isSpeaking
-                      ? "DocSpot AI Speaking"
-                      : "Listening"
-                    : "Connecting..."}
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-violet-700/80">
+                  {agentState === "connecting"
+                    ? "Connecting..."
+                    : agentState === "speaking"
+                    ? "DocSpot AI Speaking"
+                    : "Listening"}
                 </p>
+
+                <button
+                  onClick={endConversation}
+                  className="mt-2 px-8 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm text-sm font-medium flex items-center gap-2"
+                >
+                  <X size={16} />
+                  End Call with DocSpot AI
+                </button>
               </div>
             )}
           </div>

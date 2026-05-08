@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+
+export type OrbAgentState = "idle" | "connecting" | "listening" | "speaking";
 
 type ParticleShellProps = {
   count: number;
@@ -15,6 +17,7 @@ type ParticleShellProps = {
   noiseStrength: number;
   opacity: number;
   renderOrder?: number;
+  intensityRef: React.RefObject<number>;
 };
 
 function ParticleShell({
@@ -28,6 +31,7 @@ function ParticleShell({
   noiseStrength,
   opacity,
   renderOrder = 0,
+  intensityRef,
 }: ParticleShellProps) {
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -72,6 +76,7 @@ function ParticleShell({
       uNoiseStrength: { value: noiseStrength },
       uOpacity: { value: opacity },
       uPulse: { value: 0 },
+      uIntensity: { value: 0 },
     }),
     [size, colorA, colorB, swirl, noiseStrength, opacity]
   );
@@ -79,9 +84,14 @@ function ParticleShell({
   useFrame(({ clock }) => {
     if (!materialRef.current || !pointsRef.current) return;
     const t = clock.getElapsedTime();
-    materialRef.current.uniforms.uTime.value = t;
-    materialRef.current.uniforms.uPulse.value =
-      0.5 + Math.sin(t * 1.6) * 0.5;
+    const intensity = intensityRef.current ?? 0;
+    const u = materialRef.current.uniforms;
+    u.uTime.value = t;
+    u.uIntensity.value = intensity;
+
+    const pulseFreq = 1.6 + intensity * 4.0;
+    const pulseAmp = 0.5 + intensity * 0.5;
+    u.uPulse.value = pulseAmp * (0.5 + 0.5 * Math.sin(t * pulseFreq));
   });
 
   return (
@@ -113,9 +123,17 @@ function ParticleShell({
   );
 }
 
-function OrbScene() {
+function OrbScene({
+  agentState,
+  audioLevelRef,
+}: {
+  agentState: OrbAgentState;
+  audioLevelRef: React.RefObject<number>;
+}) {
   const groupRef = useRef<THREE.Group>(null);
   const targetRotation = useRef({ x: 0, y: 0 });
+  const intensityRef = useRef(0);
+  const speakingPhase = useRef({ slow: 0, fast: 0 });
 
   const colors = useMemo(
     () => ({
@@ -129,20 +147,43 @@ function OrbScene() {
     []
   );
 
-  useFrame(({ clock, pointer }) => {
+  useFrame(({ clock, pointer }, delta) => {
     if (!groupRef.current) return;
     const t = clock.getElapsedTime();
 
-    targetRotation.current.y = pointer.x * 0.4 + t * 0.18;
-    targetRotation.current.x = -pointer.y * 0.3 + Math.sin(t * 0.25) * 0.12;
+    let target = 0;
+    if (agentState === "idle") {
+      target = 0.05 + 0.05 * Math.sin(t * 0.7);
+    } else if (agentState === "connecting") {
+      target = 0.18 + 0.12 * Math.sin(t * 1.4);
+    } else if (agentState === "listening") {
+      const audio = audioLevelRef.current ?? 0;
+      target = 0.18 + audio * 0.85;
+    } else if (agentState === "speaking") {
+      speakingPhase.current.slow += delta * 1.6;
+      speakingPhase.current.fast += delta * 6.5;
+      const slow = 0.5 + 0.5 * Math.sin(speakingPhase.current.slow);
+      const fast = 0.5 + 0.5 * Math.sin(speakingPhase.current.fast * 1.7);
+      const wobble = 0.5 + 0.5 * Math.sin(t * 11.3 + Math.sin(t * 2.4));
+      target = 0.45 + 0.35 * (slow * 0.6 + fast * 0.25 + wobble * 0.15);
+    }
+
+    target = Math.min(1, Math.max(0, target));
+    intensityRef.current += (target - intensityRef.current) * 0.18;
+
+    targetRotation.current.y =
+      pointer.x * 0.4 + t * (0.18 + intensityRef.current * 0.4);
+    targetRotation.current.x =
+      -pointer.y * 0.3 + Math.sin(t * 0.25) * 0.12;
 
     groupRef.current.rotation.y +=
       (targetRotation.current.y - groupRef.current.rotation.y) * 0.05;
     groupRef.current.rotation.x +=
       (targetRotation.current.x - groupRef.current.rotation.x) * 0.05;
 
-    const breathe = 1 + Math.sin(t * 1.4) * 0.025;
-    groupRef.current.scale.setScalar(breathe);
+    const breatheBase = 1 + Math.sin(t * 1.4) * 0.025;
+    const reactScale = 1 + intensityRef.current * 0.12;
+    groupRef.current.scale.setScalar(breatheBase * reactScale);
   });
 
   return (
@@ -158,6 +199,7 @@ function OrbScene() {
         noiseStrength={0.22}
         opacity={0.5}
         renderOrder={0}
+        intensityRef={intensityRef}
       />
       <ParticleShell
         count={3000}
@@ -170,6 +212,7 @@ function OrbScene() {
         noiseStrength={0.14}
         opacity={0.85}
         renderOrder={1}
+        intensityRef={intensityRef}
       />
       <ParticleShell
         count={3500}
@@ -182,12 +225,84 @@ function OrbScene() {
         noiseStrength={0.08}
         opacity={1}
         renderOrder={2}
+        intensityRef={intensityRef}
       />
     </group>
   );
 }
 
-export function ParticleOrb({ className }: { className?: string }) {
+function useAudioLevel(mediaStream: MediaStream | null | undefined) {
+  const levelRef = useRef(0);
+
+  useEffect(() => {
+    if (!mediaStream) {
+      levelRef.current = 0;
+      return;
+    }
+
+    type AudioCtor = typeof AudioContext;
+    const w = window as unknown as {
+      AudioContext?: AudioCtor;
+      webkitAudioContext?: AudioCtor;
+    };
+    const Ctor = w.AudioContext ?? w.webkitAudioContext;
+    if (!Ctor) return;
+
+    const ctx = new Ctor();
+    const source = ctx.createMediaStreamSource(mediaStream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.6;
+    source.connect(analyser);
+
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    let raf = 0;
+    let smoothed = 0;
+
+    const tick = () => {
+      analyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i += 1) {
+        const v = (data[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / data.length);
+      const normalized = Math.min(1, rms * 4.5);
+      smoothed += (normalized - smoothed) * 0.3;
+      levelRef.current = smoothed;
+      raf = requestAnimationFrame(tick);
+    };
+    tick();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      try {
+        source.disconnect();
+      } catch {
+        /* noop */
+      }
+      ctx.close().catch(() => {
+        /* noop */
+      });
+    };
+  }, [mediaStream]);
+
+  return levelRef;
+}
+
+type ParticleOrbProps = {
+  className?: string;
+  agentState?: OrbAgentState;
+  mediaStream?: MediaStream | null;
+};
+
+export function ParticleOrb({
+  className,
+  agentState = "idle",
+  mediaStream = null,
+}: ParticleOrbProps) {
+  const audioLevelRef = useAudioLevel(mediaStream);
+
   return (
     <div className={className ?? "relative h-full w-full"}>
       <Canvas
@@ -200,7 +315,7 @@ export function ParticleOrb({ className }: { className?: string }) {
         dpr={[1, 2]}
       >
         <ambientLight intensity={0.4} />
-        <OrbScene />
+        <OrbScene agentState={agentState} audioLevelRef={audioLevelRef} />
       </Canvas>
     </div>
   );
@@ -215,12 +330,12 @@ const vertexShader = /* glsl */ `
   uniform float uSwirl;
   uniform float uNoiseStrength;
   uniform float uPulse;
+  uniform float uIntensity;
 
   varying float vDepth;
   varying float vRandom;
-  varying float vDistFromCenter;
+  varying float vIntensity;
 
-  // Hash & noise helpers
   vec3 hash3(vec3 p) {
     p = vec3(
       dot(p, vec3(127.1, 311.7, 74.7)),
@@ -256,10 +371,10 @@ const vertexShader = /* glsl */ `
 
   void main() {
     vec3 pos = position;
-    float radius = length(pos);
     vec3 dir = normalize(pos);
 
-    float angle = uTime * uSwirl + aRandom.x;
+    float swirlSpeed = uSwirl * (1.0 + uIntensity * 0.9);
+    float angle = uTime * swirlSpeed + aRandom.x;
     float c = cos(angle * 0.5);
     float s = sin(angle * 0.5);
     mat3 rot = mat3(
@@ -269,13 +384,13 @@ const vertexShader = /* glsl */ `
     );
     pos = rot * pos;
 
-    float n = noise3(pos * 1.4 + uTime * 0.25);
-    pos += dir * n * uNoiseStrength;
+    float n = noise3(pos * 1.4 + uTime * (0.25 + uIntensity * 0.5));
+    pos += dir * n * (uNoiseStrength + uIntensity * 0.1);
 
     float orbit = sin(uTime * 0.6 + aRandom.x * 6.28318) * 0.04 * aRandom.y;
     pos += dir * orbit;
 
-    float pulseScale = 1.0 + uPulse * 0.04 * aRandom.y;
+    float pulseScale = 1.0 + uPulse * (0.04 + uIntensity * 0.12) * aRandom.y;
     pos *= pulseScale;
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
@@ -283,13 +398,14 @@ const vertexShader = /* glsl */ `
     float dist = -mvPosition.z;
     vDepth = 1.0 - clamp((dist - 1.7) / 3.5, 0.0, 1.0);
     vRandom = aRandom.z;
-    vDistFromCenter = radius;
+    vIntensity = uIntensity;
 
     gl_Position = projectionMatrix * mvPosition;
 
-    float twinkle = 0.75 + 0.25 * sin(uTime * 2.0 + aRandom.x * 8.0);
+    float twinkle = 0.75 + 0.25 * sin(uTime * (2.0 + uIntensity * 4.0) + aRandom.x * 8.0);
     float depthSize = mix(0.55, 1.3, vDepth);
-    gl_PointSize = uSize * uPixelRatio * twinkle * depthSize * (1.0 / dist);
+    float intensityBoost = 1.0 + uIntensity * 0.4;
+    gl_PointSize = uSize * uPixelRatio * twinkle * depthSize * intensityBoost * (1.0 / dist);
   }
 `;
 
@@ -300,7 +416,7 @@ const fragmentShader = /* glsl */ `
 
   varying float vDepth;
   varying float vRandom;
-  varying float vDistFromCenter;
+  varying float vIntensity;
 
   void main() {
     vec2 uv = gl_PointCoord - 0.5;
@@ -312,8 +428,10 @@ const fragmentShader = /* glsl */ `
 
     vec3 color = mix(uColorB, uColorA, vDepth);
     color = mix(color, color * 0.7, coreHot * vDepth * 0.4);
+    color = mix(color, color * 1.15 + vec3(0.04, 0.0, 0.06), vIntensity * 0.55);
 
     float alpha = disc * uOpacity * mix(0.25, 1.1, vDepth);
+    alpha *= 1.0 + vIntensity * 0.2;
     alpha = clamp(alpha, 0.0, 1.0);
 
     gl_FragColor = vec4(color, alpha);
