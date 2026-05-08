@@ -1,11 +1,17 @@
 "use client";
 
+import { Outfit } from "next/font/google";
 import { useState, useCallback } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { BarVisualizer } from "@/components/ui/bar-visualizer";
 import { ParticleOrb } from "@/components/ui/particle-orb";
 import { X } from "lucide-react";
 import { DOCSPOT_AGENT_ID } from "@/config/agent";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
 
 export default function Home() {
   const [showVisualizer, setShowVisualizer] = useState(false);
@@ -49,30 +55,28 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-[#f9fafb] text-[#1f2937] font-sans overflow-hidden">
       <main className="flex-1 flex flex-col items-center justify-center relative p-4">
         <div className="max-w-3xl w-full flex flex-col items-center gap-8 z-10">
-          <div className="text-center space-y-2 px-4">
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900">
-              Docspot AI
+          <div className="text-center px-4">
+            <h1
+              className={`${outfit.className} text-5xl md:text-6xl font-semibold tracking-tight text-gray-900`}
+            >
+              DocSpot AI
             </h1>
-            <p className="text-base md:text-lg text-gray-500 font-light max-w-md mx-auto">
-              Your AI assistant for dental call handling and patient support.
-            </p>
           </div>
 
-          <div className="relative w-full min-h-[400px] flex items-center justify-center">
+          <div className="relative w-full min-h-[520px] flex items-center justify-center">
             {!showVisualizer ? (
               <div className="flex flex-col items-center gap-8 py-8">
-                <div className="flex flex-col items-center gap-4">
+                <div className="flex flex-col items-center">
                   <button
                     onClick={startConversation}
-                    className="group relative w-32 h-32 md:w-40 md:h-40 rounded-full focus:outline-none transition-transform duration-500 hover:scale-105"
-                    aria-label="Talk to Docspot AI"
+                    className="group relative w-[420px] h-[420px] md:w-[520px] md:h-[520px] focus:outline-none transition-transform duration-500 hover:scale-[1.04] cursor-pointer"
+                    aria-label="Talk to DocSpot AI"
                   >
-                    <div className="absolute inset-0 rounded-full bg-violet-500 blur-2xl opacity-30 animate-pulse group-hover:opacity-50 transition-opacity duration-500"></div>
-                    <div className="relative w-full h-full rounded-full overflow-hidden border-[6px] border-white shadow-xl ring-2 ring-violet-200 bg-slate-950">
+                    <div className="absolute inset-[28%] rounded-full bg-violet-500 blur-3xl opacity-15 animate-pulse group-hover:opacity-25 transition-opacity duration-500 pointer-events-none"></div>
+                    <div className="relative w-full h-full">
                       <ParticleOrb />
                     </div>
                   </button>
-                  <span className="text-lg font-medium text-violet-700">Talk to Docspot AI</span>
                 </div>
               </div>
             ) : (
@@ -98,14 +102,14 @@ export default function Home() {
                     className="px-8 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm text-sm font-medium flex items-center gap-2"
                   >
                     <X size={16} />
-                    End Call with Docspot AI
+                    End Call with DocSpot AI
                   </button>
                 </div>
 
                 <p className="text-xs font-medium animate-pulse uppercase tracking-wider text-red-600/80">
                   {conversation.status === "connected"
                     ? conversation.isSpeaking
-                      ? "Docspot AI Speaking"
+                      ? "DocSpot AI Speaking"
                       : "Listening"
                     : "Connecting..."}
                 </p>
@@ -116,7 +120,7 @@ export default function Home() {
       </main>
 
       <footer className="py-6 text-center text-sm text-gray-400 border-t border-gray-100 bg-white/50">
-        <p>&copy; 2026 Docspot AI. All rights reserved.</p>
+        <p>&copy; 2026 DocSpot AI. All rights reserved.</p>
       </footer>
     </div>
   );

@@ -13,25 +13,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Docspot AI",
+  title: "DocSpot AI",
   description:
-    "Docspot AI helps handle dental calls and support patient conversations.",
+    "DocSpot AI helps handle dental calls and support patient conversations.",
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
     shortcut: "/icon.svg",
     apple: "/icon.svg",
   },
   openGraph: {
-    title: "Docspot AI",
+    title: "DocSpot AI",
     description:
-      "Docspot AI helps handle dental calls and support patient conversations.",
+      "DocSpot AI helps handle dental calls and support patient conversations.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Docspot AI",
+    title: "DocSpot AI",
     description:
-      "Docspot AI helps handle dental calls and support patient conversations.",
+      "DocSpot AI helps handle dental calls and support patient conversations.",
   },
 };
 
