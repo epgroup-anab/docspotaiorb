@@ -89,9 +89,7 @@ function ParticleShell({
     u.uTime.value = t;
     u.uIntensity.value = intensity;
 
-    const pulseFreq = 1.6 + intensity * 4.0;
-    const pulseAmp = 0.5 + intensity * 0.5;
-    u.uPulse.value = pulseAmp * (0.5 + 0.5 * Math.sin(t * pulseFreq));
+    u.uPulse.value = 0.5 + 0.5 * Math.sin(t * 1.6);
   });
 
   return (
@@ -153,26 +151,23 @@ function OrbScene({
 
     let target = 0;
     if (agentState === "idle") {
-      target = 0.05 + 0.05 * Math.sin(t * 0.7);
+      target = 0;
     } else if (agentState === "connecting") {
-      target = 0.18 + 0.12 * Math.sin(t * 1.4);
+      target = 0.25 + 0.15 * Math.sin(t * 1.2);
     } else if (agentState === "listening") {
       const audio = audioLevelRef.current ?? 0;
-      target = 0.18 + audio * 0.85;
+      target = 0.1 + audio * 0.5;
     } else if (agentState === "speaking") {
-      speakingPhase.current.slow += delta * 1.6;
-      speakingPhase.current.fast += delta * 6.5;
+      speakingPhase.current.slow += delta * 2.2;
       const slow = 0.5 + 0.5 * Math.sin(speakingPhase.current.slow);
-      const fast = 0.5 + 0.5 * Math.sin(speakingPhase.current.fast * 1.7);
-      const wobble = 0.5 + 0.5 * Math.sin(t * 11.3 + Math.sin(t * 2.4));
-      target = 0.45 + 0.35 * (slow * 0.6 + fast * 0.25 + wobble * 0.15);
+      const wobble = 0.5 + 0.5 * Math.sin(t * 4.5);
+      target = 0.3 + 0.25 * (slow * 0.7 + wobble * 0.3);
     }
 
     target = Math.min(1, Math.max(0, target));
-    intensityRef.current += (target - intensityRef.current) * 0.18;
+    intensityRef.current += (target - intensityRef.current) * 0.1;
 
-    targetRotation.current.y =
-      pointer.x * 0.4 + t * (0.18 + intensityRef.current * 0.4);
+    targetRotation.current.y = pointer.x * 0.4 + t * 0.18;
     targetRotation.current.x =
       -pointer.y * 0.3 + Math.sin(t * 0.25) * 0.12;
 
@@ -182,7 +177,7 @@ function OrbScene({
       (targetRotation.current.x - groupRef.current.rotation.x) * 0.05;
 
     const breatheBase = 1 + Math.sin(t * 1.4) * 0.025;
-    const reactScale = 1 + intensityRef.current * 0.12;
+    const reactScale = 1 + intensityRef.current * 0.08;
     groupRef.current.scale.setScalar(breatheBase * reactScale);
   });
 
@@ -373,8 +368,7 @@ const vertexShader = /* glsl */ `
     vec3 pos = position;
     vec3 dir = normalize(pos);
 
-    float swirlSpeed = uSwirl * (1.0 + uIntensity * 0.9);
-    float angle = uTime * swirlSpeed + aRandom.x;
+    float angle = uTime * uSwirl + aRandom.x;
     float c = cos(angle * 0.5);
     float s = sin(angle * 0.5);
     mat3 rot = mat3(
@@ -384,13 +378,13 @@ const vertexShader = /* glsl */ `
     );
     pos = rot * pos;
 
-    float n = noise3(pos * 1.4 + uTime * (0.25 + uIntensity * 0.5));
-    pos += dir * n * (uNoiseStrength + uIntensity * 0.1);
+    float n = noise3(pos * 1.4 + uTime * 0.25);
+    pos += dir * n * uNoiseStrength;
 
     float orbit = sin(uTime * 0.6 + aRandom.x * 6.28318) * 0.04 * aRandom.y;
     pos += dir * orbit;
 
-    float pulseScale = 1.0 + uPulse * (0.04 + uIntensity * 0.12) * aRandom.y;
+    float pulseScale = 1.0 + uPulse * 0.04 * aRandom.y;
     pos *= pulseScale;
 
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
@@ -402,9 +396,9 @@ const vertexShader = /* glsl */ `
 
     gl_Position = projectionMatrix * mvPosition;
 
-    float twinkle = 0.75 + 0.25 * sin(uTime * (2.0 + uIntensity * 4.0) + aRandom.x * 8.0);
+    float twinkle = 0.75 + 0.25 * sin(uTime * 2.0 + aRandom.x * 8.0);
     float depthSize = mix(0.55, 1.3, vDepth);
-    float intensityBoost = 1.0 + uIntensity * 0.4;
+    float intensityBoost = 1.0 + uIntensity * 0.18;
     gl_PointSize = uSize * uPixelRatio * twinkle * depthSize * intensityBoost * (1.0 / dist);
   }
 `;
@@ -428,10 +422,10 @@ const fragmentShader = /* glsl */ `
 
     vec3 color = mix(uColorB, uColorA, vDepth);
     color = mix(color, color * 0.7, coreHot * vDepth * 0.4);
-    color = mix(color, color * 1.15 + vec3(0.04, 0.0, 0.06), vIntensity * 0.55);
+    color = mix(color, color * 1.08, vIntensity * 0.3);
 
     float alpha = disc * uOpacity * mix(0.25, 1.1, vDepth);
-    alpha *= 1.0 + vIntensity * 0.2;
+    alpha *= 1.0 + vIntensity * 0.08;
     alpha = clamp(alpha, 0.0, 1.0);
 
     gl_FragColor = vec4(color, alpha);
