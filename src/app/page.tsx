@@ -1,16 +1,11 @@
 "use client";
 
-import { Outfit } from "next/font/google";
+import Image from "next/image";
 import { useState, useCallback, useMemo } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { ParticleOrb, type OrbAgentState } from "@/components/ui/particle-orb";
 import { X } from "lucide-react";
 import { DOCSPOT_AGENT_ID } from "@/config/agent";
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
 
 export default function Home() {
   const [showVisualizer, setShowVisualizer] = useState(false);
@@ -60,13 +55,15 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-[#f9fafb] text-[#1f2937] font-sans overflow-hidden">
       <main className="flex-1 flex flex-col items-center justify-center relative p-4">
         <div className="max-w-3xl w-full flex flex-col items-center gap-8 z-10">
-          <div className="text-center px-4">
-            <h1
-              className={`${outfit.className} text-5xl md:text-6xl font-semibold tracking-tight`}
-              style={{ color: "#007fff" }}
-            >
-              DocSpot AI
-            </h1>
+          <div className="flex justify-center px-4">
+            <Image
+              src="/docspot-logo.svg"
+              alt="DocSpot"
+              width={365}
+              height={92}
+              priority
+              className="h-16 md:h-20 w-auto"
+            />
           </div>
 
           <div className="relative w-full min-h-[560px] flex items-center justify-center">
